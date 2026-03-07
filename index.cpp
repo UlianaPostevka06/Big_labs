@@ -24,8 +24,26 @@ public:
 	}
 };
 
+class Client {
+private:
+	string name;
+	int tableNumber;
+public:
+	Client(string n = "Guest", int table = 0) : name(n), tableNumber(table) {
+		cout << "Client " << name << " came to the table #" << tableNumber << endl;
+	}
+	~Client() {
+		cout << "Client" << name << " went away" << endl;
+	}
+	void showClient() {
+		cout << "Client: " << name << " (Table #" << tableNumber << ")" << endl;
+	}
+};
+
 int main() {
 	Dish soup("Borscht", "Red and tasty", 120.5);
 	Dish water("Water", 25.0);
 	Dish empty;
+	Client ulyana("Uliana", 5); 
+	Client guest;
 }
