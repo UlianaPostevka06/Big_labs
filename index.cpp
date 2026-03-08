@@ -33,10 +33,29 @@ public:
 		cout << "Client " << name << " came to the table #" << tableNumber << endl;
 	}
 	~Client() {
-		cout << "Client" << name << " went away" << endl;
+		cout << "Client " << name << " went away" << endl;
 	}
 	void showClient() {
 		cout << "Client: " << name << " (Table #" << tableNumber << ")" << endl;
+	}
+};
+
+class Order {
+private:
+	int orderID;
+	string status;
+public:
+	Order(int id, string s = "New") : orderID(id), status(s) {
+		cout << "Order #" << orderID << " created with status: " << status << endl;
+	}
+	~Order() {
+		cout << "Order #" << orderID << " deleted from memory" << endl;
+	}
+
+	Order() : Order(0, "Empty") {}
+
+	void showOrder() {
+		cout << "Order ID: " << orderID << ", Status: " << status << endl;
 	}
 };
 
@@ -46,4 +65,6 @@ int main() {
 	Dish empty;
 	Client ulyana("Uliana", 5); 
 	Client guest;
+	Order myOrder(101); 
+	Order emptyOrder;
 }
