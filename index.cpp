@@ -9,6 +9,7 @@ private:
 	string name;
 	string description;
 	double price;
+	static int totalDishes;
 public:
 	Dish(string n = "Unknown", string d = "No description", double p = 0.0) : name(n), description(d), price(p) {
 		cout << "Created a dish: " << name << endl;
@@ -22,7 +23,29 @@ public:
 		cout << "Desroyed a description: " << description << endl;
 		cout << "Desroyed a price: " << price << endl;
 	}
+	Dish(const Dish& other) : name(other.name + " (Copy)"), description(other.description), price(other.price) { totalDishes++; }
+
+	Dish(Dish&& other) noexcept : name(std::move(other.name)), description(std::move(other.description)), price(other.price) {
+		cout << "Moved dish: " << name << endl; other.price = 0;
+	}
+
+	void setPrice(double price) {
+			this->price = price;
+	}
+
+	static void showTotal() { 
+		cout << "Total dishes created: " << totalDishes << endl; 
+	}
+
+	Dish operator+(const Dish& other) { 
+		return Dish(this->name + " & " + other.name, this->price + other.price); 
+	}
+
+	friend ostream& operator<<(ostream& os, const Dish& d) { os << d.name << " (" << d.price << " uah)"; return os; }
+	
 };
+
+
 
 class Client {
 private:
@@ -59,12 +82,18 @@ public:
 	}
 };
 
+int Dish::totalDishes = 0;
 int main() {
 	Dish soup("Borscht", "Red and tasty", 120.5);
+	Dish soupCopy = soup;
+	Dish movedSoup = std::move(soup);
+	cout << "Our menu: " << soupCopy << " and " << movedSoup << endl; Dish::showTotal(); return 0;
 	Dish water("Water", 25.0);
 	Dish empty;
+
 	Client ulyana("Uliana", 5); 
 	Client guest;
+
 	Order myOrder(101); 
 	Order emptyOrder;
 }
