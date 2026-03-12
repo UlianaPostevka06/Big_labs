@@ -9,7 +9,7 @@ private:
 	string name;
 	string description;
 	double price;
-	static int totalDishes;
+	static int totalDishes;//Static
 public:
 	Dish(string n = "Unknown", string d = "No description", double p = 0.0) : name(n), description(d), price(p) {
 		cout << "Created a dish: " << name << endl;
@@ -23,11 +23,11 @@ public:
 		cout << "Desroyed a description: " << description << endl;
 		cout << "Desroyed a price: " << price << endl;
 	}
-	Dish(const Dish& other) : name(other.name + " (Copy)"), description(other.description), price(other.price) { totalDishes++; }
+	Dish(const Dish& other) : name(other.name + " (Copy)"), description(other.description), price(other.price) { totalDishes++; } //L-value reference 
 
 	Dish(Dish&& other) noexcept : name(std::move(other.name)), description(std::move(other.description)), price(other.price) {
 		cout << "Moved dish: " << name << endl; other.price = 0;
-	}
+	}// R-value reference move конструктор
 
 	void setPrice(double price) {
 			this->price = price;
@@ -38,8 +38,11 @@ public:
 	}
 
 	Dish operator+(const Dish& other) { 
-		return Dish(this->name + " & " + other.name, this->price + other.price); 
+		return Dish(this->name + " & " + other.name, this->price + other.price); //перевантаження і бінарний
 	}
+	Dish operator-() {
+		this->price *= 0.9; cout << "Applied 10% discount to " << name << endl; return *this;
+	}//унарний
 
 	friend ostream& operator<<(ostream& os, const Dish& d) { os << d.name << " (" << d.price << " uah)"; return os; }
 	
@@ -62,6 +65,7 @@ public:
 		cout << "Client: " << name << " (Table #" << tableNumber << ")" << endl;
 	}
 };
+
 
 class Order {
 private:
