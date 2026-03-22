@@ -4,33 +4,72 @@
 
 using namespace std;
 
-class Dish {
-private: 
-	string name;
+class MenuItem {
+protected: 
+	string name; 
+	double price; 
+public:
+	MenuItem(string n, double p) : name(n), price(p) { 
+		cout << "Base MenuItem created: " << name << endl; 
+	} 
+	virtual ~MenuItem() { 
+		cout << "Base MenuItem destroyed: " << name << endl; 
+	}
+	virtual void showInfo() { 
+		cout << "Item: " << name << " | Price: " << price << " uah" << endl; 
+	} 
+	void setPrice(double newPrice) { 
+		this->price = newPrice; } 
+};
+
+
+class Dish : public MenuItem {
+private:
 	string description;
-	double price;
 	static int totalDishes;//Static
 public:
-	Dish(string n = "Unknown", string d = "No description", double p = 0.0) : name(n), description(d), price(p) {
-		cout << "Created a dish: " << name << endl;
-		cout << "Created a description: " << description << endl;
-		cout << "Created a price: " << price << endl;
+	Dish(string n, string d, double p) : MenuItem(n, p), description(d) { 
+		totalDishes++; cout << "Dish created: " << description << endl; 
 	}
-	Dish(string n, double p): Dish(n, "Regular dish", p) { 
-		cout << "Short constructor used for " << name << endl; }
+
+	Dish() : MenuItem("Unknown", 0.0), description("No description") {
+		totalDishes++; cout << "Default Dish created" << endl;
+	}
+
+	Dish(string n, double p) : Dish(n, "Regular dish", p) {
+		cout << "Short constructor used for " << name << endl;
+	}
+
 	~Dish() {
 		cout << "Desroyed a dish: " << name << endl;
 		cout << "Desroyed a description: " << description << endl;
 		cout << "Desroyed a price: " << price << endl;
 	}
-	Dish(const Dish& other) : name(other.name + " (Copy)"), description(other.description), price(other.price) { totalDishes++; } //L-value reference 
+	Dish(const Dish& other) : MenuItem(other), description(other.description) { totalDishes++; cout << "Dish copied: " << name << " (Copy)" << endl; } //L-value reference 
 
-	Dish(Dish&& other) noexcept : name(std::move(other.name)), description(std::move(other.description)), price(other.price) {
-		cout << "Moved dish: " << name << endl; other.price = 0;
+	Dish(Dish&& other) noexcept : MenuItem(std::move(other)), description(std::move(other.description)) {
+		cout << "Moved dish: " << name << endl;
 	}// R-value reference move конструктор
 
-	void setPrice(double price) {
-			this->price = price;
+	Dish& operator=(const Dish& other) {
+		if (this == &other) 
+		return *this;
+
+		MenuItem::operator=(other);
+
+		this->description = other.description; 
+		cout << "Dish assignment operator (copy) called for " << name << endl; 
+		return *this;
+	}
+	Dish& operator=(Dish&& other) noexcept {
+		if (this == &other) 
+		return *this; 
+
+		MenuItem::operator=(std::move(other)); 
+
+		this->description = std::move(other.description); 
+		cout << "Dish assignment operator (move) called for " << name << endl; 
+		return *this; 
 	}
 
 	static void showTotal() { 
@@ -38,7 +77,7 @@ public:
 	}
 
 	Dish operator+(const Dish& other) { 
-		return Dish(this->name + " & " + other.name, this->price + other.price); //перевантаження і бінарний
+		return Dish(this->name + " & " + other.name, "Mixed dish", this->price + other.price); //перевантаження і бінарний
 	}
 	Dish operator-() {
 		this->price *= 0.9; cout << "Applied 10% discount to " << name << endl; return *this;
@@ -48,6 +87,16 @@ public:
 	
 };
 
+
+class Soup : public Dish {
+public:
+	Soup(string n, string d, double p) : Dish(n, d, p) {
+		cout << "Soup specialized constructor called!" << endl; 
+	}
+	~Soup() { 
+		cout << "Soup unique destructor called!" << endl; 
+	}
+};
 
 
 class Client {
@@ -71,33 +120,61 @@ class Order {
 private:
 	int orderID;
 	string status;
+	Client customer;
+	vector<Dish> items;
 public:
-	Order(int id, string s = "New") : orderID(id), status(s) {
-		cout << "Order #" << orderID << " created with status: " << status << endl;
+	Order(int id, Client c) : orderID(id), customer(c), status("New") {
+		cout << "Order #" << orderID << " created for "; customer.showClient();
 	}
 	~Order() {
 		cout << "Order #" << orderID << " deleted from memory" << endl;
 	}
 
-	Order() : Order(0, "Empty") {}
+	void addDish(const Dish& d) { items.push_back(d); }
 
 	void showOrder() {
-		cout << "Order ID: " << orderID << ", Status: " << status << endl;
+		cout << "--- Order ID: " << orderID << ", Status: " << status << " ---" << endl; customer.showClient(); cout << "Dishes in order:" << endl; for (const auto& item : items) {
+			cout << " - " << item << endl;
+		}
 	}
+	
+};
+
+class Restaurant {
+private: 
+	string restaurantName; 
+	vector<MenuItem*> menu;
+public: 
+	Restaurant(string name) : restaurantName(name) {} void addToMenu(MenuItem* item) { menu.push_back(item); } 
+	
+	void showFullMenu() { 
+		cout << "\n--- Welcome to " << restaurantName << " ---" << endl; for (auto const& item : menu) { item->showInfo(); } 
+	} 
 };
 
 int Dish::totalDishes = 0;
 int main() {
-	Dish soup("Borscht", "Red and tasty", 120.5);
-	Dish soupCopy = soup;
-	Dish movedSoup = std::move(soup);
-	cout << "Our menu: " << soupCopy << " and " << movedSoup << endl; Dish::showTotal(); return 0;
-	Dish water("Water", 25.0);
-	Dish empty;
+	Restaurant myRest("Astra's Bistro");
+	Dish* pasta = new Dish("Pasta", "Carbonara", 150.0);
 
-	Client ulyana("Uliana", 5); 
+	Soup* borscht = new Soup("Borscht", "Ukrainian classic", 100.0);
+
+	myRest.addToMenu(pasta);
+	myRest.addToMenu(borscht); 
+	myRest.showFullMenu();
+	Dish genericDish("Basic", "None", 10.0);
+	genericDish = *pasta;
+
+	Client ulyana("Uliana", 5);
 	Client guest;
 
-	Order myOrder(101); 
-	Order emptyOrder;
+	Order myOrder(101, ulyana);
+	myOrder.addDish(*pasta);
+	myOrder.showOrder();
+	myOrder.addDish(*borscht);
+
+	delete pasta; 
+	delete borscht; 
+	return 0;
+
 }
