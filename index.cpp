@@ -4,6 +4,12 @@
 
 using namespace std;
 
+class IOrderProcess { 
+public: 
+	virtual void confirmOrder() = 0; 
+	virtual ~IOrderProcess() {} 
+};// Завдання 8 Створення інтерфейсу (клас, що містить лише чисто віртуальні функції)
+
 class MenuItem {
 protected: 
 	string name; 
@@ -14,19 +20,24 @@ public:
 	} 
 	virtual ~MenuItem() { 
 		cout << "Base MenuItem destroyed: " << name << endl; 
-	}
+	}//Завдання 4 Віртуальний деструктор для коректного видалення дочірніх об'єктів
 	virtual void showInfo() { 
 		cout << "Item: " << name << " | Price: " << price << " uah" << endl; 
-	} 
+	}  // Завдання 2: Віртуальна функція для забезпечення динамічного поліморфізму
 	void setPrice(double newPrice) { 
-		this->price = newPrice; } 
+		this->price = newPrice; 
+	} 
+	void staticType() {
+		cout << "This is a basic MenuItem" << endl; 
+	}// Завдання 1: Метод без virtual для демонстрації проблеми статичного зв'язування 
+	virtual void prepare() = 0; // завдання 7: Чисто віртуальна функція(робить клас абстрактним шаблоном)
 };
 
 
 class Dish : public MenuItem {
 private:
 	string description;
-	static int totalDishes;//Static
+	static int totalDishes;
 public:
 	Dish(string n, string d, double p) : MenuItem(n, p), description(d) { 
 		totalDishes++; cout << "Dish created: " << description << endl; 
@@ -49,7 +60,7 @@ public:
 
 	Dish(Dish&& other) noexcept : MenuItem(std::move(other)), description(std::move(other.description)) {
 		cout << "Moved dish: " << name << endl;
-	}// R-value reference move конструктор
+	}
 
 	Dish& operator=(const Dish& other) {
 		if (this == &other) 
@@ -75,9 +86,18 @@ public:
 	static void showTotal() { 
 		cout << "Total dishes created: " << totalDishes << endl; 
 	}
+	void staticType() {
+		cout << "This is a specific dish" << endl; 
+	}
+	void showInfo() override final { // Перевизначення віртуальної функції батьківського класу і final (забороняє подальше перевизначення у Soup) 
+		cout << "Dish: " << name << " | Desc: " << description << endl; 
+	}
+	void prepare() override { 
+		cout << "Cooking " << name << " according to the recipe..." << endl; 
+	}
 
 	Dish operator+(const Dish& other) { 
-		return Dish(this->name + " & " + other.name, "Mixed dish", this->price + other.price); //перевантаження і бінарний
+		return Dish(this->name + " & " + other.name, "Mixed dish", this->price + other.price);
 	}
 	Dish operator-() {
 		this->price *= 0.9; cout << "Applied 10% discount to " << name << endl; return *this;
@@ -116,13 +136,16 @@ public:
 };
 
 
-class Order {
+class Order : public IOrderProcess {//  Завдання 8: Реалізація інтерфейсу (наслідування та перевизначення методу)
 private:
 	int orderID;
 	string status;
 	Client customer;
 	vector<Dish> items;
 public:
+	void confirmOrder() override {
+		cout << "Order #" << orderID << " has been confirmed and sent to kitchen!" << endl; 
+	}
 	Order(int id, Client c) : orderID(id), customer(c), status("New") {
 		cout << "Order #" << orderID << " created for "; customer.showClient();
 	}
@@ -153,28 +176,30 @@ public:
 };
 
 int Dish::totalDishes = 0;
-int main() {
-	Restaurant myRest("Astra's Bistro");
-	Dish* pasta = new Dish("Pasta", "Carbonara", 150.0);
 
-	Soup* borscht = new Soup("Borscht", "Ukrainian classic", 100.0);
-
-	myRest.addToMenu(pasta);
-	myRest.addToMenu(borscht); 
-	myRest.showFullMenu();
-	Dish genericDish("Basic", "None", 10.0);
-	genericDish = *pasta;
-
-	Client ulyana("Uliana", 5);
-	Client guest;
-
-	Order myOrder(101, ulyana);
-	myOrder.addDish(*pasta);
-	myOrder.showOrder();
-	myOrder.addDish(*borscht);
-
-	delete pasta; 
-	delete borscht; 
-	return 0;
-
+void printItem(MenuItem& item) {// Завдання 6 динамічний поліморфіз через посилання на базовий клас
+	item.showInfo();
 }
+int main() {
+	Restaurant myRest("Crown");
+
+	//pasta = new Dish("Pasta", "Carbonara", 150.0);
+	// pasta->staticType(); 1 завдання статичний виклик методу, який не залежить від об'єкта
+
+	MenuItem* pasta = new Dish("Pasta", "Carbonara", 150.0); 
+	MenuItem* soup = new Soup("Borscht", "Ukrainian classic", 100.0); 
+
+	myRest.addToMenu(pasta); 
+	myRest.addToMenu(soup); 
+	myRest.showFullMenu(); 
+	
+	Client ulyana("Uliana", 5); 
+	Order myOrder(101, ulyana); 
+	
+	printItem(*pasta);
+	myOrder.confirmOrder(); 
+	delete pasta; 
+	delete soup; 
+
+	return 0; 
+};
